@@ -12,7 +12,7 @@ pip install -r requirements.txt
 ## Usage
 To start the project, use the following command:
 ```
-python -m Stranger
+python3 -m Stranger
 ```
 
 ## Contributing
