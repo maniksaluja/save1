@@ -85,6 +85,9 @@ async def clone(sender , s_channel_id, des_channel_id , i, channel_id ,xx):
     except (ChannelBanned, ChannelInvalid, ChannelPrivate, ChatIdInvalid, ChatInvalid):
         await app.send_message(sender, "Have you joined the channel?")
         return
+    except FloodWait as fw:
+        await asyncio.sleep(fw.x + 10)
+        return await clone(sender , s_channel_id, des_channel_id , i, channel_id ,xx)
     except Exception as e:
         print(e)
         return
@@ -107,7 +110,7 @@ async def run_batch(sender ,d, s, start_msg_id, end_msg_id, channel_id):
             await clone(sender , s, d, i, channel_id, xx)
         except FloodWait as fw:
             await app.send_message(sender, "Floodwait {}".format(fw.value))
-            await asyncio.sleep(fw.value + 5)
+            await asyncio.sleep(fw.x + 5)
             await clone(sender ,s, d, i, channel_id, xx)
         await asyncio.sleep(10)
         
