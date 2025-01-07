@@ -18,10 +18,7 @@ pattern = "https://t.me/(?:c/)?(.*)/(\d+)"
 async def clone(sender , s_channel_id, des_channel_id , i, channel_id):
     try:
         msg = await userbot.get_messages(s_channel_id , i)
-        file = await userbot.download_media(
-            msg,
-            in_memory=True
-            )
+        file = await userbot.download_media(msg)
         caption = None
         if msg.caption is not None:
             caption = msg.caption
@@ -45,7 +42,6 @@ async def clone(sender , s_channel_id, des_channel_id , i, channel_id):
             )
         elif msg.media==MessageMediaType.VIDEO and msg.video.mime_type in ["video/mp4", "video/x-matroska"]:
             data = video_metadata(file)
-            print(data)
             height, width, duration = data["height"], data["width"], data["duration"]
             try:
                 thumb_path = await screenshot(file, duration)
