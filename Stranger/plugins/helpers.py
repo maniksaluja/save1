@@ -86,7 +86,9 @@ def hhmmss(seconds):
     return x
 
 async def screenshot(video, duration):
+    print(f"duration :{duration}")
     time_stamp = hhmmss(int(duration)/2)
+    print(f"time stamp :{time_stamp}")
     out = dt.now().isoformat("_", "seconds") + ".jpg"
     cmd = ["ffmpeg",
            "-ss",
@@ -106,9 +108,11 @@ async def screenshot(video, duration):
     stdout, stderr = await process.communicate()
     x = stderr.decode().strip()
     y = stdout.decode().strip()
+    print(x)
     if os.path.isfile(out):
         return out
     else:
+        print("file not generated")
         None       
 
 FINISHED_PROGRESS_STR = "█"
