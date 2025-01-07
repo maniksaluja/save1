@@ -45,6 +45,7 @@ async def clone(sender , s_channel_id, des_channel_id , i, channel_id):
             )
         elif msg.media==MessageMediaType.VIDEO and msg.video.mime_type in ["video/mp4", "video/x-matroska"]:
             data = video_metadata(file)
+            print(data)
             height, width, duration = data["height"], data["width"], data["duration"]
             try:
                 thumb_path = await screenshot(file, duration)
