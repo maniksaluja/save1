@@ -95,6 +95,7 @@ async def clone(sender , s_channel_id, des_channel_id , i, channel_id):
                 else:
                     uploader = await fast_upload(f'{file}', f'{file}', bot)
                     await bot.send_file(des_channel_id, uploader, caption=caption, thumb=thumb_path, force_document=True)
+                await app.send_message(LOGGER_ID," send using telethon \n https://t.me/c/{}/{}".format(channel_id,i))
                 if os.path.isfile(file) == True:
                     os.remove(file)
             except Exception as e:
