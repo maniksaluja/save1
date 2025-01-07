@@ -112,7 +112,7 @@ async def run_batch(sender ,d, s, start_msg_id, end_msg_id, channel_id):
             await app.send_message(sender, "Floodwait {}".format(int(fw.x)))
             await asyncio.sleep(int(fw.x) + 5)
             await clone(sender ,s, d, i, channel_id, xx)
-        await asyncio.sleep(10)
+        await asyncio.sleep(60)
         
 
 @app.on_message(filters.command("cancel") & filters.private & filters.user(OWNER_ID))
