@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 import logging
 import pyromod.listen
 from pyrogram import Client
+from telethon.sync import TelegramClient
 
 
 load_dotenv()
@@ -30,7 +31,7 @@ if not API_HASH or not API_ID or not BOT_TOKEN or not LOGGER_ID or not OWNER_ID 
     print("One or more required environment variables are not set.")
     sys.exit(1)  # Exit the program with a non-zero status code
 
-
+bot = TelegramClient("bot", API_ID, API_HASH).start(bot_token=BOT_TOKEN)
 
 app = Client("bot", API_ID, API_HASH, bot_token=BOT_TOKEN)
 

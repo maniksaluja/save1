@@ -8,8 +8,9 @@ from pyrogram import filters
 from pyrogram.types import Message
 from pyrogram.errors import ChannelBanned, ChannelInvalid, ChannelPrivate, ChatIdInvalid, ChatInvalid, FloodWait
 from pyrogram.enums import MessageMediaType
-from Stranger import app , OWNER_ID, userbot , LOGGER_ID
-from Stranger.plugins.helpers import get_link, progress_for_pyrogram
+from telethon.tl.types import DocumentAttributeVideo
+from Stranger import app ,bot , OWNER_ID, userbot , LOGGER_ID
+from Stranger.plugins.helpers import get_link, video_metadata, screenshot, fast_upload
 
 queue = []
 pattern = "https://t.me/(?:c/)?(.*)/(\d+)"
@@ -24,22 +25,43 @@ async def clone(sender , s_channel_id, des_channel_id , i, channel_id):
         caption = None
         if msg.caption is not None:
             caption = msg.caption
-        if msg.media==MessageMediaType.VIDEO_NOTE:              
-            await userbot.send_video_note(
+
+        round_message = False
+        height, width, duration, thumb_path = 90, 90, 0, None
+        if msg.media==MessageMediaType.VIDEO_NOTE: 
+            round_message = True
+            data = video_metadata(file) 
+            height, width, duration = data["height"], data["width"], data["duration"]   
+            try:
+                thumb_path = await screenshot(file, duration)
+            except Exception:
+                thumb_path = None         
+            await app.send_video_note(
                 chat_id=des_channel_id,
                 video_note=file,
+                length=height,
+                duration=duration,
+                thumb=thumb_path,
             )
         elif msg.media==MessageMediaType.VIDEO and msg.video.mime_type in ["video/mp4", "video/x-matroska"]:
-            await userbot.send_video(
+            data = video_metadata(file)
+            height, width, duration = data["height"], data["width"], data["duration"]
+            try:
+                thumb_path = await screenshot(file, duration)
+            except Exception:
+                thumb_path = None
+            await app.send_video(
                 chat_id=des_channel_id,
                 video=file,
                 caption=caption,
                 supports_streaming=True,
+                height=height, width=width, duration=duration, 
+                thumb=thumb_path,
             )
         elif msg.media==MessageMediaType.PHOTO:
-            await userbot.send_photo(des_channel_id, file, caption=caption)
+            await app.send_photo(des_channel_id, file, caption=caption)
         else:
-            await userbot.send_document(
+            await app.send_document(
                 des_channel_id,
                 file, 
                 caption=caption,
@@ -57,16 +79,54 @@ async def clone(sender , s_channel_id, des_channel_id , i, channel_id):
         return
     except FloodWait as fw:
         await asyncio.sleep(int(fw.x) + 10)
-        return await clone(sender , s_channel_id, des_channel_id , i, channel_id ,xx)
+        return await clone(sender , s_channel_id, des_channel_id , i, channel_id)
     except Exception as e:
         print(e)
-        return
+        if "messages.SendMedia" in str(e) \
+        or "SaveBigFilePartRequest" in str(e) \
+        or "SendMediaRequest" in str(e) \
+        or str(e) == "File size equals to 0 B":
+            try: 
+                if msg.media==MessageMediaType.VIDEO and msg.video.mime_type in ["video/mp4", "video/x-matroska"]:
+                    uploader = await fast_upload(f'{file}', f'{file}',bot)
+                    attributes = [DocumentAttributeVideo(duration=duration, w=width, h=height, round_message=round_message, supports_streaming=True)] 
+                    await bot.send_file(des_channel_id, uploader, caption=caption, thumb=thumb_path, attributes=attributes, force_document=False)
+                elif msg.media==MessageMediaType.VIDEO_NOTE:
+                    uploader = await fast_upload(f'{file}', f'{file}',bot)
+                    attributes = [DocumentAttributeVideo(duration=duration, w=width, h=height, round_message=round_message, supports_streaming=True)] 
+                    await bot.send_file(des_channel_id, uploader, caption=caption, thumb=thumb_path, attributes=attributes, force_document=False)
+                else:
+                    uploader = await fast_upload(f'{file}', f'{file}', bot)
+                    await bot.send_file(des_channel_id, uploader, caption=caption, thumb=thumb_path, force_document=True)
+                if os.path.isfile(file) == True:
+                    os.remove(file)
+            except Exception as e:
+                print(e)
+                await app.send_message(LOGGER_ID, f'Failed to save: `https://t.me/c/{channel_id}/{i}`\n\nError: {str(e)}')
+                try:
+                    os.remove(file)
+                except Exception:
+                    return
+                return 
+        else:
+            await app.send_message(LOGGER_ID, f'Failed to save: `https://t.me/c/{channel_id}/{i}`\n\nError: {str(e)}')
+            try:
+                os.remove(file)
+            except Exception:
+                return
+            return
+    try:
+        os.remove(file)
+        if os.path.isfile(file) == True:
+            os.remove(file)
+    except Exception:
+        pass
 
 async def run_batch(sender ,d, s, start_msg_id, end_msg_id, channel_id):
     yy = await app.send_message(sender,".")
     total = end_msg_id-start_msg_id
     for i in range(start_msg_id,end_msg_id+1):
-        if (i//10) == 0:
+        if (i % 10) == 0:
             await yy.edit(f"Sending message {i-start_msg_id + 1} of {total}...")
         try: 
             if not sender in queue:
@@ -79,10 +139,10 @@ async def run_batch(sender ,d, s, start_msg_id, end_msg_id, channel_id):
         try:
             await clone(sender , s, d, i, channel_id)
         except FloodWait as fw:
-            await app.send_message(sender, "Floodwait {}".format(int(fw.x)))
             await asyncio.sleep(int(fw.x) + 5)
-            await clone(sender ,s, d, i, channel_id, xx)
-        await asyncio.sleep(60)
+            await app.send_message(sender, "Floodwait {}".format(int(fw.x)))
+            await clone(sender ,s, d, i, channel_id)
+        await asyncio.sleep(10)
         
 
 @app.on_message(filters.command("cancel") & filters.private & filters.user(OWNER_ID))
