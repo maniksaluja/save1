@@ -33,7 +33,7 @@ if not API_HASH or not API_ID or not BOT_TOKEN or not LOGGER_ID or not OWNER_ID 
 
 bot = TelegramClient("bot", API_ID, API_HASH).start(bot_token=BOT_TOKEN)
 
-app = Client("bot", API_ID, API_HASH, bot_token=BOT_TOKEN)
+app = Client("strangerbot", API_ID, API_HASH, bot_token=BOT_TOKEN)
 
 userbot = Client("userbot" , API_ID, API_HASH, session_string=STRING)
 
