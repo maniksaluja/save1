@@ -14,22 +14,13 @@ from Stranger.plugins.helpers import get_link, progress_for_pyrogram
 queue = []
 pattern = "https://t.me/(?:c/)?(.*)/(\d+)"
 
-async def clone(sender , s_channel_id, des_channel_id , i, channel_id ,xx):
+async def clone(sender , s_channel_id, des_channel_id , i, channel_id):
     try:
-        await xx.edit("Cloning...")
         msg = await userbot.get_messages(s_channel_id , i)
         file = await userbot.download_media(
             msg,
-            progress=progress_for_pyrogram,
-            progress_args=(
-                        app,
-                        "**DOWNLOADING:**\n",
-                        xx,
-                        time.time()
-                    ),
             in_memory=True
             )
-        await xx.edit('Preparing to Upload!')
         caption = None
         if msg.caption is not None:
             caption = msg.caption
@@ -37,13 +28,6 @@ async def clone(sender , s_channel_id, des_channel_id , i, channel_id ,xx):
             await userbot.send_video_note(
                 chat_id=des_channel_id,
                 video_note=file,
-                progress=progress_for_pyrogram,
-                progress_args=(
-                            app,
-                            '**UPLOADING:**\n',
-                            xx,
-                            time.time()
-                        )
             )
         elif msg.media==MessageMediaType.VIDEO and msg.video.mime_type in ["video/mp4", "video/x-matroska"]:
             await userbot.send_video(
@@ -51,13 +35,6 @@ async def clone(sender , s_channel_id, des_channel_id , i, channel_id ,xx):
                 video=file,
                 caption=caption,
                 supports_streaming=True,
-                progress=progress_for_pyrogram,
-                progress_args=(
-                            app,
-                            '**UPLOADING:**\n',
-                            xx,
-                            time.time()
-                        )
             )
         elif msg.media==MessageMediaType.PHOTO:
             await userbot.send_photo(des_channel_id, file, caption=caption)
@@ -66,13 +43,6 @@ async def clone(sender , s_channel_id, des_channel_id , i, channel_id ,xx):
                 des_channel_id,
                 file, 
                 caption=caption,
-                progress=progress_for_pyrogram,
-                progress_args=(
-                            app,
-                            '**UPLOADING:**\n',
-                            xx,
-                            time.time()
-                        )
             )
         try:
             os.remove(file)
@@ -94,10 +64,10 @@ async def clone(sender , s_channel_id, des_channel_id , i, channel_id ,xx):
 
 async def run_batch(sender ,d, s, start_msg_id, end_msg_id, channel_id):
     yy = await app.send_message(sender,".")
-    xx = await app.send_message(sender,"Starting...")
     total = end_msg_id-start_msg_id
     for i in range(start_msg_id,end_msg_id+1):
-        await yy.edit(f"Sending message {i-start_msg_id + 1} of {total}...")
+        if (i//10) == 0:
+            await yy.edit(f"Sending message {i-start_msg_id + 1} of {total}...")
         try: 
             if not sender in queue:
                 await app.send_message(sender, "Batch completed.")
@@ -107,7 +77,7 @@ async def run_batch(sender ,d, s, start_msg_id, end_msg_id, channel_id):
             await app.send_message(sender, "Batch completed.")
             break
         try:
-            await clone(sender , s, d, i, channel_id, xx)
+            await clone(sender , s, d, i, channel_id)
         except FloodWait as fw:
             await app.send_message(sender, "Floodwait {}".format(int(fw.x)))
             await asyncio.sleep(int(fw.x) + 5)
